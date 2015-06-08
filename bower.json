@@ -1,6 +1,6 @@
 {
-  "name": "polymer-calendar-datepicker",
-  "version": "0.0.4",
+  "name": "tcg-swipe",
+  "version": "0.1.0",
   "authors": [
     "Raymond Chou <raymond.chou@thecontrolgroup.com>"
   ],
@@ -9,9 +9,9 @@
     "web-components",
     "polymer"
   ],
-  "main": "polymer-daterange-picker.html",
-  "description": "Polymer Daterange Picker.",
-  "homepage": "https://github.com/the-control-group/polymer-daterange-picker/",
+  "main": "tcg-swipe.html",
+  "description": "TCG Polymer Swipe.",
+  "homepage": "https://github.com/the-control-group/tcg-swipe/",
   "license": "MIT",
   "ignore": [
     "**/.*",
@@ -23,11 +23,7 @@
   "dependencies": {
     "moment": "~2.10.3",
     "jquery": "~2.1.4",
-    "polymer": "Polymer/polymer#^0.5",
-    "momentjs": "~2.10.3",
-    "moment-timezone": "~0.4.0",
-    "core-elements": "Polymer/core-elements#^0.5",
-    "paper-elements": "Polymer/paper-elements#~0.5.6"
+    "polymer": "Polymer/polymer#^0.5"
   },
   "devDependencies": {
     "iron-doc-viewer": "PolymerElements/iron-doc-viewer",
