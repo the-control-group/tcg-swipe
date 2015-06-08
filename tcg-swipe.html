@@ -1,0 +1,181 @@
+<!--
+@element tcg-swipe
+@author designbyraychou
+@homepage https://github.com/the-control-group/tcg-swipe
+
+**This element is compatible with Polymer 0.5.**
+
+__Example:__
+
+```
+	<tcg-swipe id="swipe" isReveal="{{ isReveal }}" xThreshold="{{ xThreshold }}" animationTime="{{ animationTime }}">
+		<div touchpad>Overlay Content</div>
+		<div left>
+			Left Content
+			<a href="#" class="close" on-tap="{{ close }}">Close</a>
+		</div>
+		<div right>
+			Right Content
+			<a href="#" class="close" on-tap="{{ close }}">Close</a>
+		</div>
+	</tcg-swipe>
+```
+# Attributes
+
+#### `isReveal`
+
+Boolean that determines if the left and right content is position right below the touchpad. If `false`, left and right content moves with the touchpad.
+
+#### `xThreshold`
+
+Number that determines if it'll reveal the full content on trackend event. Default is `50` px
+
+#### `animationTime`
+
+Number in milliseconds for animation length
+
+# Methods
+
+#### `close`
+
+Resets the positions
+
+-->
+<link rel="import" href="../polymer/polymer.html">
+<polymer-element name="tcg-swipe" attributes="isReveal xThreshold animationTime">
+	<template>
+		<style>
+			#container {
+				position: relative;
+				width: 100%;
+				height: 100px;
+				overflow: hidden;
+			}
+			#wrapper,
+			#touchpad,
+			#left,
+			#right {
+				position: absolute;
+				top: 0;
+				width: 100%;
+				height: 100%;
+			}
+			#wrapper,
+			#touchpad {
+				left: 0;
+			}
+			#touchpad {
+				z-index: 5;
+				cursor: pointer;
+			}
+			#left {
+				left: -100%;
+			}
+			#right {
+				right: -100%;
+			}
+			.isReveal #left,
+			.isReveal #right {
+				left: 0;
+				right: auto;
+				z-index: 1;
+			}
+		</style>
+		<div id="container" class="{{ {isReveal: isReveal} | tokenList }}" touch-action="none">
+			<div id="wrapper">
+				<div id="touchpad">
+					<content select="[touchpad]"></content>
+				</div>
+				<div id="left">
+					<content select="[left]"></content>
+				</div>
+				<div id="right">
+					<content select="[right]"></content>
+				</div>
+			</div>
+		</div>
+	</template>
+	<script src="../jquery/dist/jquery.min.js"></script>
+	<script>
+		Polymer({
+			publish: {
+				touchpad: null,
+				wrapper: null,
+				animationTime: 400,
+				xStartPosition: 0,
+				xThreshold: 50,
+				isReveal: false,
+			},
+			xPositionReset: function(cb) {
+				var poly = this;
+				poly.elAnimate.animate({
+					left: 0
+				}, poly.animationTime, function() {
+					poly.xStartPosition = 0;
+					if( cb ) cb();
+				});
+			},
+			xPositionSnap: function(x,cb) {
+				var poly = this;
+				if( x > 0 ) {
+					poly.elAnimate.animate({
+						left: '100%'
+					}, poly.animationTime, function() {
+						poly.xStartPosition = poly.elAnimate.width();
+						if( cb ) cb();
+					});
+				} else {
+					poly.elAnimate.animate({
+						left: '-100%'
+					}, poly.animationTime, function() {
+						poly.xStartPosition = - poly.elAnimate.width();
+						if( cb ) cb();
+					});
+				}
+			},
+			onTrackstart: function(event) {
+				if( this.xStartPosition == 0 ) this.xStartPosition = event.clientX;
+			},
+			onTrack: function(event) {
+				var dif = event.clientX - this.xStartPosition;
+				this.$.left.style.zIndex = 1;
+				this.$.right.style.zIndex = 1;
+				if( dif > 0 ) {
+					this.$.left.style.zIndex = 2;
+				} else {
+					this.$.right.style.zIndex = 2;
+				}
+				this.elAnimate.css({left: dif});
+			},
+			onTrackend: function(event) {
+				var dif = event.clientX - this.xStartPosition;
+				if( Math.abs(dif) >= this.xThreshold ) {
+					this.xPositionSnap(dif);
+				} else {
+					this.xPositionReset();
+				}
+			},
+			ready: function() {
+				var poly = this;
+				this.touchpad = $(this.$.touchpad);
+				if( this.isReveal ) {
+					this.elAnimate = this.touchpad;
+				} else {
+					this.elAnimate = $(this.$.wrapper);
+				}
+				PolymerGestures.addEventListener(this.$.touchpad,'trackstart',function(){
+					poly.onTrackstart.apply(poly,arguments);
+				});
+				PolymerGestures.addEventListener(this.$.touchpad,'track',function(){
+					poly.onTrack.apply(poly,arguments);
+				});
+				PolymerGestures.addEventListener(this.$.touchpad,'trackend',function(){
+					poly.onTrackend.apply(poly,arguments);
+				});
+			},
+			close: function() {
+				this.xPositionReset();
+			},
+		});
+	</script>
+</polymer-element>

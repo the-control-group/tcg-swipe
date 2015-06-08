@@ -1,0 +1,61 @@
+<!doctype html>
+<html>
+<head>
+	<meta charset="UTF-8">
+	<title>tcg-swipe-test</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+	<script src="../../webcomponentsjs/webcomponents.js"></script>
+	<script src="../../web-component-tester/browser.js"></script>
+	<script src="../../jquery/dist/jquery.min.js"></script>
+	<link href="../tcg-swipe.html" rel="import">
+</head>
+<body unresolved>
+	<tcg-swipe id="swipe">
+		<div touchpad>Overlay Content</div>
+		<div left>
+			Left Content
+			<a href="#" class="close" on-tap="{{ close }}">Close</a>
+		</div>
+		<div right>
+			Right Content
+			<a href="#" class="close" on-tap="{{ close }}">Close</a>
+		</div>
+	</tcg-swipe>
+	<script>
+	window.addEventListener('polymer-ready', function(e) {
+		var el = document.querySelector('tcg-swipe');
+		el.animationTime = 0;
+		el.xThreshold = 0;
+		var wrapper = el.$.wrapper;
+		var touchpad = el.$.touchpad;
+		suite('<tcg-swipe>', function() {
+			test('initializes', function () {
+				assert(el._readied);
+			});
+		});
+		test('animates correctly', function (done) {
+			el.xPositionSnap(100, function(){
+				assert.equal( wrapper.style.left, '100%');
+			});
+			el.xPositionReset(function(){
+				assert.equal( wrapper.style.left, '0px');
+			});
+			el.xPositionSnap(-100, function(){
+				assert.equal( wrapper.style.left, '-100%');
+			});
+			el.xPositionReset(function(){
+				assert.equal( wrapper.style.left, '0px');
+			});
+			done();
+		});
+		test('close fn works', function (done) {
+			el.xPositionSnap(100);
+			el.close();
+			assert.equal( wrapper.style.left, '0px');
+			done();
+		});
+
+	});
+	</script>
+</body>
+</html>

@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<title>tcg-swipe</title>
+	<script src="../webcomponentsjs/webcomponents.min.js"></script>
+	<link rel="import" href="tcg-swipe.html">
+	<style>
+	html,body {
+		margin: 0;
+		padding: 0;
+	}
+	</style>
+</head>
+<body unresolved>
+	<polymer-element name="tcg-swipe-example">
+		<template>
+			<style>
+			tcg-swipe {
+				text-align: center;
+			}
+			tcg-swipe::shadow #touchpad {
+				background: #cfc;
+			}
+			tcg-swipe::shadow #right {
+				background: #ccf;
+			}
+			tcg-swipe::shadow #left {
+				background: #fcc;
+			}
+			</style>
+			<tcg-swipe id="swipe" isReveal="{{ isReveal }}" xThreshold="{{ xThreshold }}" animationTime="{{ animationTime }}">
+				<div touchpad>Overlay Content</div>
+				<div left>
+					Left Content
+					<a href="#" class="close" on-tap="{{ close }}">Close</a>
+				</div>
+				<div right>
+					Right Content
+					<a href="#" class="close" on-tap="{{ close }}">Close</a>
+				</div>
+			</tcg-swipe>
+		</template>
+		<script>
+		Polymer({
+			publish: {
+				xThreshold: 100,
+				isReveal: true,
+			},
+			close: function(){
+				this.$.swipe.close();
+			}
+		});
+		</script>
+	</polymer-element>
+	<tcg-swipe-example></tcg-swipe-example>
+</body>
+</html>
