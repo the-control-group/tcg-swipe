@@ -42,13 +42,13 @@ Resets the positions
 
 -->
 <link rel="import" href="../polymer/polymer.html">
-<polymer-element name="tcg-swipe" attributes="isReveal xThreshold animationTime">
+<polymer-element name="tcg-swipe" attributes="isReveal xThreshold animationTime allowedSwipeDirection startingZIndex onSwipeLeft onSwipeRight onSwipeLeftComplete onSwipeRightComplete">
 	<template>
 		<style>
 			#container {
 				position: relative;
 				width: 100%;
-				height: 100px;
+				height: 50px;
 				overflow: hidden;
 			}
 			#wrapper,
@@ -105,6 +105,8 @@ Resets the positions
 				xStartPosition: 0,
 				xThreshold: 50,
 				isReveal: false,
+				startingZIndex: 0,
+				allowedSwipeDirection: ['left','right'],
 			},
 			xPositionReset: function(cb) {
 				var poly = this;
@@ -123,6 +125,7 @@ Resets the positions
 					}, poly.animationTime, function() {
 						poly.xStartPosition = poly.elAnimate.width();
 						if( cb ) cb();
+						if( poly.onSwipeLeftComplete ) poly.onSwipeLeftComplete.apply(poly,arguments);
 					});
 				} else {
 					poly.elAnimate.animate({
@@ -130,6 +133,7 @@ Resets the positions
 					}, poly.animationTime, function() {
 						poly.xStartPosition = - poly.elAnimate.width();
 						if( cb ) cb();
+						if( poly.onSwipeRightComplete ) poly.onSwipeRightComplete.apply(poly,arguments);
 					});
 				}
 			},
@@ -138,30 +142,46 @@ Resets the positions
 			},
 			onTrack: function(event) {
 				var dif = event.clientX - this.xStartPosition;
-				this.$.left.style.zIndex = 1;
-				this.$.right.style.zIndex = 1;
-				if( dif > 0 ) {
-					this.$.left.style.zIndex = 2;
-				} else {
-					this.$.right.style.zIndex = 2;
+				this.$.left.style.zIndex = this.startingZIndex - 1;
+				this.$.right.style.zIndex = this.startingZIndex - 1;
+				if( dif > 0 && _.indexOf(this.allowedSwipeDirection,'right') != -1 ) {
+					this.$.left.style.zIndex = this.startingZIndex;
+					this.elAnimate.css({left: dif});
+				} else if( dif < 0 && _.indexOf(this.allowedSwipeDirection,'left') != -1 ) {
+					this.$.right.style.zIndex = this.startingZIndex;
+					this.elAnimate.css({left: dif});
 				}
-				this.elAnimate.css({left: dif});
 			},
-			onTrackend: function(event) {
+			onTrackend: function(event,b,c) {
 				var dif = event.clientX - this.xStartPosition;
-				if( Math.abs(dif) >= this.xThreshold ) {
-					this.xPositionSnap(dif);
+				if( Math.abs(dif) >= this.xThreshold && (
+					( dif < 0 && _.indexOf(this.allowedSwipeDirection,'left') != -1 ) ||
+					( dif > 0 && _.indexOf(this.allowedSwipeDirection,'right') != -1 )
+				)) {
+					if( dif > 0 && this.onSwipeRight ) {
+						this.onSwipeRight.apply(this,arguments);
+					}
+					if( dif < 0 && this.onSwipeLeft ) {
+						this.onSwipeLeft.apply(this,arguments);
+					}
+					this.xPositionSnap.apply(this,[dif]);
 				} else {
-					this.xPositionReset();
+					this.xPositionReset.apply(this);
 				}
 			},
 			ready: function() {
 				var poly = this;
 				this.touchpad = $(this.$.touchpad);
+				this.$.touchpad.style.zIndex = this.startingZIndex;
 				if( this.isReveal ) {
 					this.elAnimate = this.touchpad;
+					this.$.left.style.zIndex = this.startingZIndex - 1;
+					this.$.right.style.zIndex = this.startingZIndex - 1;
 				} else {
 					this.elAnimate = $(this.$.wrapper);
+					this.$.touchpad.style.zIndex = this.startingZIndex;
+					this.$.left.style.zIndex = this.startingZIndex;
+					this.$.right.style.zIndex = this.startingZIndex;
 				}
 				PolymerGestures.addEventListener(this.$.touchpad,'trackstart',function(){
 					poly.onTrackstart.apply(poly,arguments);
