@@ -83,13 +83,13 @@ Resets the positions
 		</style>
 		<div id="container" class="{{ {isReveal: isReveal} | tokenList }}" touch-action="none">
 			<div id="wrapper">
-				<div id="touchpad">
+				<div id="touchpad" touch-action="pan-y">
 					<content select="[touchpad]"></content>
 				</div>
-				<div id="left">
+				<div id="left" touch-action="pan-y">
 					<content select="[left]"></content>
 				</div>
-				<div id="right">
+				<div id="right" touch-action="pan-y">
 					<content select="[right]"></content>
 				</div>
 			</div>
