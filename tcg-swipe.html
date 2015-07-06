@@ -42,7 +42,7 @@ Resets the positions
 
 -->
 <link rel="import" href="../polymer/polymer.html">
-<polymer-element name="tcg-swipe" attributes="isReveal xThreshold animationTime allowedSwipeDirection startingZIndex onSwipeLeft onSwipeRight onSwipeLeftComplete onSwipeRightComplete">
+<polymer-element name="tcg-swipe" attributes="isReveal xThreshold animationTime allowedSwipeDirection startingZIndex onSwipeLeft onSwipeRight onSwipeLeftComplete onSwipeRightComplete tapHandler">
 	<template>
 		<style>
 			#container {
@@ -99,6 +99,7 @@ Resets the positions
 	<script>
 		Polymer({
 			publish: {
+				tapHandler: null,
 				touchpad: null,
 				wrapper: null,
 				animationTime: 400,
@@ -192,6 +193,18 @@ Resets the positions
 				PolymerGestures.addEventListener(this.$.touchpad,'trackend',function(){
 					poly.onTrackend.apply(poly,arguments);
 				});
+
+				var touchStart, touchTimeDifference;
+				$(this.$.touchpad)
+					.on('touchstart mousedown', function(e){
+						touchTime = new Date();
+					})
+					.on('touchend mouseup', function(e){
+						var touchTimeDifference = new Date() - touchTime;
+						if (touchTimeDifference < 200 && poly.tapHandler ) {
+							poly.tapHandler();
+						}
+					});
 			},
 			close: function() {
 				this.xPositionReset();
