@@ -202,7 +202,7 @@ Resets the positions
 					.on('touchend mouseup', function(e){
 						var touchTimeDifference = new Date() - touchTime;
 						if (touchTimeDifference < 200 && poly.tapHandler ) {
-							poly.tapHandler();
+							poly.tapHandler(e);
 						}
 					});
 			},
