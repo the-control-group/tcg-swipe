@@ -107,6 +107,7 @@ Resets the positions
 				xThreshold: 50,
 				isReveal: false,
 				startingZIndex: 0,
+				touchTimeDifference: 100,
 				allowedSwipeDirection: ['left','right'],
 			},
 			xPositionReset: function(cb) {
@@ -195,16 +196,18 @@ Resets the positions
 				});
 
 				var touchStart, touchTimeDifference;
-				$(this.$.touchpad)
-					.on('touchstart mousedown', function(e){
-						touchTime = new Date();
-					})
-					.on('touchend mouseup', function(e){
-						var touchTimeDifference = new Date() - touchTime;
-						if (touchTimeDifference < 200 && poly.tapHandler ) {
-							poly.tapHandler(e);
-						}
-					});
+				if( poly.tapHandler ) {
+					$(this.$.touchpad)
+						.on('touchstart mousedown', function(e){
+							touchTime = new Date();
+						})
+						.on('touchend mouseup', function(e){
+							var touchTimeDifference = new Date() - touchTime;
+							if (touchTimeDifference < poly.touchTimeDifference ) {
+								poly.tapHandler(e);
+							}
+						});
+				}
 			},
 			close: function() {
 				this.xPositionReset();
