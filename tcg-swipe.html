@@ -221,16 +221,25 @@ Resets the positions
 
 				var touchStart, touchTimeDifference;
 				if( poly.tapHandler ) {
-					$(this.$.touchpad)
-						.on('touchstart mousedown', function(e){
-							touchTime = new Date();
-						})
-						.on('touchend mouseup', function(e){
-							var touchTimeDifference = new Date() - touchTime;
-							if (touchTimeDifference < poly.touchTimeDifference ) {
-								poly.tapHandler(e);
-							}
-						});
+					var el = $(this.$.touchpad);
+					function startTrack(e) {
+						touchTime = new Date();
+					}
+					function endTrack(e) {
+						var touchTimeDifference = new Date() - touchTime;
+						if (touchTimeDifference < poly.touchTimeDifference ) {
+							poly.tapHandler(e);
+						}
+					}
+					if( !!('ontouchstart' in window) ) {
+						el
+							.on('touchstart', startTrack)
+							.on('touchend', endTrack);
+					} else {
+						el
+							.on('mousedown', startTrack)
+							.on('mouseup', endTrack);
+					}
 				}
 			},
 			close: function() {
