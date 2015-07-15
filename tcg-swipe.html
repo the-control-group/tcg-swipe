@@ -109,6 +109,7 @@ Resets the positions
 				startingZIndex: 0,
 				touchTimeDifference: 100,
 				allowedSwipeDirection: ['left','right'],
+				_isTracking: false,
 			},
 			xPositionReset: function(cb) {
 				var poly = this;
@@ -159,6 +160,7 @@ Resets the positions
 				window.requestAnimationFrame(step);
 			},
 			onTrackstart: function(event) {
+				this._isTracking = true;
 				if( this.xStartPosition == 0 ) this.xStartPosition = event.clientX;
 			},
 			onTrack: function(event) {
@@ -179,6 +181,7 @@ Resets the positions
 				}
 			},
 			onTrackend: function(event,b,c) {
+				this._isTracking = false;
 				var dif = event.clientX - this.xStartPosition;
 				if( Math.abs(dif) >= this.xThreshold && (
 					( dif < 0 && _.indexOf(this.allowedSwipeDirection,'left') != -1 ) ||
@@ -219,27 +222,28 @@ Resets the positions
 					poly.onTrackend.apply(poly,arguments);
 				});
 
-				var touchStart, touchTimeDifference;
+				var touchStart, touchTimeDifference, enterEvent, exitEvent;
 				if( poly.tapHandler ) {
-					var el = $(this.$.touchpad);
 					function startTrack(e) {
 						touchTime = new Date();
 					}
 					function endTrack(e) {
+						var dif = 0;
 						var touchTimeDifference = new Date() - touchTime;
-						if (touchTimeDifference < poly.touchTimeDifference ) {
+						if(touchTimeDifference < poly.touchTimeDifference && poly._isTracking == false ) {
 							poly.tapHandler(e);
 						}
 					}
 					if( !!('ontouchstart' in window) ) {
-						el
-							.on('touchstart', startTrack)
-							.on('touchend', endTrack);
+						enterEvent = 'touchstart';
+						exitEvent = 'touchend';
 					} else {
-						el
-							.on('mousedown', startTrack)
-							.on('mouseup', endTrack);
+						enterEvent = 'mousedown';
+						exitEvent = 'mouseup';
 					}
+					$(this.$.touchpad)
+						.on(enterEvent, startTrack)
+						.on(exitEvent, endTrack);
 				}
 			},
 			close: function() {
