@@ -83,13 +83,13 @@ Resets the positions
 		</style>
 		<div id="container" class="{{ {isReveal: isReveal} | tokenList }}" touch-action="none">
 			<div id="wrapper">
-				<div id="touchpad" touch-action="pan-y">
+				<div id="touchpad" touch-action="pan-y" on-tap="{{ _tapHandler }}">
 					<content select="[touchpad]"></content>
 				</div>
-				<div id="left" touch-action="pan-y">
+				<div id="left" touch-action="pan-y" on-tap="{{ _tapHandler }}">
 					<content select="[left]"></content>
 				</div>
-				<div id="right" touch-action="pan-y">
+				<div id="right" touch-action="pan-y" on-tap="{{ _tapHandler }}">
 					<content select="[right]"></content>
 				</div>
 			</div>
@@ -109,79 +109,52 @@ Resets the positions
 				startingZIndex: 0,
 				touchTimeDifference: 100,
 				allowedSwipeDirection: ['left','right'],
-				_isTracking: false,
 			},
 			xPositionReset: function(cb) {
 				var poly = this;
-				var startTime;
-				var startPosition = poly.elAnimate[0].getBoundingClientRect().left;
-				function step(timestamp) {
-					if( !startTime ) startTime = timestamp;
-					progress = (timestamp - startTime) / poly.animationTime;
-					var position = startPosition - (progress * startPosition);
-					if( progress >= 1 ) {
-						position = 0;
-					}
-					poly.elAnimate[0].style.webkitTransform = 'translate('+position+'px,0)';
-					poly.elAnimate[0].style.transform = 'translate('+position+'px,0)';
-					if( progress < 1 ) {
-						window.requestAnimationFrame(step);
-					} else {
-						poly.xStartPosition = poly.elAnimate.width();
-						if( cb ) cb();
-						if( poly.onSwipeLeftComplete ) poly.onSwipeLeftComplete.apply(poly,arguments);
-					}
-				}
-				window.requestAnimationFrame(step);
+				poly.elAnimate.animate({
+					left: 0
+				}, poly.animationTime, function() {
+					poly.xStartPosition = 0;
+					if( cb ) cb();
+				});
 			},
 			xPositionSnap: function(x,cb) {
 				var poly = this;
-				var startTime;
-				var startProgress = poly.elAnimate[0].getBoundingClientRect().left / poly.elAnimate.width();
-				function step(timestamp) {
-					if( !startTime ) startTime = timestamp;
-					progress = ((timestamp - startTime ) / poly.animationTime) + Math.abs(startProgress);
-					var position;
-					if( x < 0 ) {
-						position = progress >= 1 ? -100 : -progress*100;
-					} else {
-						position = progress >= 1 ? 100 : progress*100;
-					}
-					poly.elAnimate[0].style.webkitTransform = 'translate('+position+'%,0)';
-					poly.elAnimate[0].style.transform = 'translate('+position+'%,0)';
-					if( progress < 1 ) {
-						window.requestAnimationFrame(step);
-					} else {
+				if( x > 0 ) {
+					poly.elAnimate.animate({
+						left: '100%'
+					}, poly.animationTime, function() {
 						poly.xStartPosition = poly.elAnimate.width();
 						if( cb ) cb();
 						if( poly.onSwipeLeftComplete ) poly.onSwipeLeftComplete.apply(poly,arguments);
-					}
+					});
+				} else {
+					poly.elAnimate.animate({
+						left: '-100%'
+					}, poly.animationTime, function() {
+						poly.xStartPosition = - poly.elAnimate.width();
+						if( cb ) cb();
+						if( poly.onSwipeRightComplete ) poly.onSwipeRightComplete.apply(poly,arguments);
+					});
 				}
-				window.requestAnimationFrame(step);
 			},
 			onTrackstart: function(event) {
-				this._isTracking = true;
 				if( this.xStartPosition == 0 ) this.xStartPosition = event.clientX;
 			},
 			onTrack: function(event) {
-				var poly = this;
 				var dif = event.clientX - this.xStartPosition;
 				this.$.left.style.zIndex = this.startingZIndex - 1;
 				this.$.right.style.zIndex = this.startingZIndex - 1;
-				function follow() {
-					poly.elAnimate[0].style.webkitTransform = 'translate('+dif+'px,0)';
-					poly.elAnimate[0].style.transform = 'translate('+dif+'px,0)';
-				}
 				if( dif > 0 && _.indexOf(this.allowedSwipeDirection,'right') != -1 ) {
 					this.$.left.style.zIndex = this.startingZIndex;
-					follow();
+					this.elAnimate.css({left: dif});
 				} else if( dif < 0 && _.indexOf(this.allowedSwipeDirection,'left') != -1 ) {
 					this.$.right.style.zIndex = this.startingZIndex;
-					follow();
+					this.elAnimate.css({left: dif});
 				}
 			},
 			onTrackend: function(event,b,c) {
-				this._isTracking = false;
 				var dif = event.clientX - this.xStartPosition;
 				if( Math.abs(dif) >= this.xThreshold && (
 					( dif < 0 && _.indexOf(this.allowedSwipeDirection,'left') != -1 ) ||
@@ -197,6 +170,9 @@ Resets the positions
 				} else {
 					this.xPositionReset.apply(this);
 				}
+			},
+			_tapHandler: function(event,detail,handler) {
+				this._tap = [event,detail,handler];
 			},
 			ready: function() {
 				var poly = this;
@@ -221,29 +197,25 @@ Resets the positions
 				PolymerGestures.addEventListener(this.$.touchpad,'trackend',function(){
 					poly.onTrackend.apply(poly,arguments);
 				});
+				var delay = 200 - touchTimeDifference;
+				if( delay < 0 ) {
+					delay = 0;
+				}
 
-				var touchStart, touchTimeDifference, enterEvent, exitEvent;
+				var touchStart, touchTimeDifference;
 				if( poly.tapHandler ) {
-					function startTrack(e) {
-						touchTime = new Date();
-					}
-					function endTrack(e) {
-						var dif = 0;
-						var touchTimeDifference = new Date() - touchTime;
-						if(touchTimeDifference < poly.touchTimeDifference && poly._isTracking == false ) {
-							poly.tapHandler(e);
-						}
-					}
-					if( !!('ontouchstart' in window) ) {
-						enterEvent = 'touchstart';
-						exitEvent = 'touchend';
-					} else {
-						enterEvent = 'mousedown';
-						exitEvent = 'mouseup';
-					}
 					$(this.$.touchpad)
-						.on(enterEvent, startTrack)
-						.on(exitEvent, endTrack);
+						.on('touchstart mousedown', function(e){
+							touchTime = new Date();
+						})
+						.on('touchend mouseup', function(e){
+							var touchTimeDifference = new Date() - touchTime;
+							if (touchTimeDifference < poly.touchTimeDifference ) {
+								poly.async(function(){
+									poly.tapHandler.apply(poly,poly._tap);
+								},null,delay);
+							}
+						});
 				}
 			},
 			close: function() {
