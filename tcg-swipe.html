@@ -157,6 +157,7 @@ Resets the positions
 			onTrackend: function(event,b,c) {
 				var dif = event.clientX - this.xStartPosition;
 				if( Math.abs(dif) >= this.xThreshold && (
+					// ( dif > 0 && _.indexOf(this.allowedSwipeDirection,'left') != -1 ) &&
 					( dif < 0 && _.indexOf(this.allowedSwipeDirection,'left') != -1 ) ||
 					( dif > 0 && _.indexOf(this.allowedSwipeDirection,'right') != -1 )
 				)) {
@@ -189,14 +190,14 @@ Resets the positions
 					this.$.right.style.zIndex = this.startingZIndex;
 				}
 				poly._isTrack = false;
-				PolymerGestures.addEventListener(this.$.touchpad,'trackstart',function(){
+				PolymerGestures.addEventListener(this.$.wrapper,'trackstart',function(){
 					poly._isTrack = true;
 					poly.onTrackstart.apply(poly,arguments);
 				});
-				PolymerGestures.addEventListener(this.$.touchpad,'track',function(){
+				PolymerGestures.addEventListener(this.$.wrapper,'track',function(){
 					poly.onTrack.apply(poly,arguments);
 				});
-				PolymerGestures.addEventListener(this.$.touchpad,'trackend',function(){
+				PolymerGestures.addEventListener(this.$.wrapper,'trackend',function(){
 					poly._isTrack = false;
 					poly.onTrackend.apply(poly,arguments);
 				});
