@@ -188,32 +188,27 @@ Resets the positions
 					this.$.left.style.zIndex = this.startingZIndex;
 					this.$.right.style.zIndex = this.startingZIndex;
 				}
+				poly._isTrack = false;
 				PolymerGestures.addEventListener(this.$.touchpad,'trackstart',function(){
+					poly._isTrack = true;
 					poly.onTrackstart.apply(poly,arguments);
 				});
 				PolymerGestures.addEventListener(this.$.touchpad,'track',function(){
 					poly.onTrack.apply(poly,arguments);
 				});
 				PolymerGestures.addEventListener(this.$.touchpad,'trackend',function(){
+					poly._isTrack = false;
 					poly.onTrackend.apply(poly,arguments);
 				});
-				var delay = 200 - touchTimeDifference;
-				if( delay < 0 ) {
-					delay = 0;
-				}
 
 				var touchStart, touchTimeDifference;
 				if( poly.tapHandler ) {
 					$(this.$.touchpad)
-						.on('touchstart mousedown', function(e){
-							touchTime = new Date();
-						})
 						.on('touchend mouseup', function(e){
-							var touchTimeDifference = new Date() - touchTime;
-							if (touchTimeDifference < poly.touchTimeDifference ) {
+							if( ! poly._isTrack ) {
 								poly.async(function(){
 									poly.tapHandler.apply(poly,poly._tap);
-								},null,delay);
+								},null,100);
 							}
 						});
 				}
