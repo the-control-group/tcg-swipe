@@ -143,6 +143,7 @@ Resets the positions
 				if( this.xStartPosition == 0 ) this.xStartPosition = event.clientX;
 			},
 			onTrack: function(event) {
+        event.preventTap();
 				var dif = event.clientX - this.xStartPosition;
 				this.$.left.style.zIndex = this.startingZIndex - 1;
 				this.$.right.style.zIndex = this.startingZIndex - 1;
@@ -155,14 +156,12 @@ Resets the positions
 				}
 			},
 			onTrackend: function(event,b,c) {
-        console.log(event)
 				var dif = event.clientX - this.xStartPosition;
 				if( Math.abs(dif) >= this.xThreshold && (
 					// ( dif > 0 && _.indexOf(this.allowedSwipeDirection,'left') != -1 ) &&
 					( dif < 0 && _.indexOf(this.allowedSwipeDirection,'left') != -1 ) ||
 					( dif > 0 && _.indexOf(this.allowedSwipeDirection,'right') != -1 )
 				)) {
-          event.preventTap();
 					if( dif > 0 && this.onSwipeRight ) {
 						this.onSwipeRight.apply(this,arguments);
 					}
