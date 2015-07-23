@@ -42,7 +42,7 @@ Resets the positions
 
 -->
 <link rel="import" href="../polymer/polymer.html">
-<polymer-element name="tcg-swipe" attributes="isReveal xThreshold animationTime allowedSwipeDirection startingZIndex onSwipeLeft onSwipeRight onSwipeLeftComplete onSwipeRightComplete">
+<polymer-element name="tcg-swipe" attributes="isReveal xThreshold animationTime allowedSwipeDirection startingZIndex onSwipeLeft onSwipeRight onSwipeLeftComplete onSwipeRightComplete" touch-action="none">
 	<template>
 		<style>
 			#container {
@@ -155,12 +155,14 @@ Resets the positions
 				}
 			},
 			onTrackend: function(event,b,c) {
+        console.log(event)
 				var dif = event.clientX - this.xStartPosition;
 				if( Math.abs(dif) >= this.xThreshold && (
 					// ( dif > 0 && _.indexOf(this.allowedSwipeDirection,'left') != -1 ) &&
 					( dif < 0 && _.indexOf(this.allowedSwipeDirection,'left') != -1 ) ||
 					( dif > 0 && _.indexOf(this.allowedSwipeDirection,'right') != -1 )
 				)) {
+          event.preventTap();
 					if( dif > 0 && this.onSwipeRight ) {
 						this.onSwipeRight.apply(this,arguments);
 					}
@@ -205,7 +207,7 @@ Resets the positions
 					poly.onTrackend.apply(poly,arguments);
 				});
 
-				var touchStart, touchTimeDifference;
+				// var touchStart, touchTimeDifference;
 				// if( poly.tapHandler ) {
 				// 	$(this.$.touchpad)
 				// 		.on('touchend mouseup', function(e){
