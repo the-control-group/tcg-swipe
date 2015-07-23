@@ -42,7 +42,7 @@ Resets the positions
 
 -->
 <link rel="import" href="../polymer/polymer.html">
-<polymer-element name="tcg-swipe" attributes="isReveal xThreshold animationTime allowedSwipeDirection startingZIndex onSwipeLeft onSwipeRight onSwipeLeftComplete onSwipeRightComplete tapHandler">
+<polymer-element name="tcg-swipe" attributes="isReveal xThreshold animationTime allowedSwipeDirection startingZIndex onSwipeLeft onSwipeRight onSwipeLeftComplete onSwipeRightComplete">
 	<template>
 		<style>
 			#container {
@@ -109,90 +109,74 @@ Resets the positions
 				startingZIndex: 0,
 				touchTimeDifference: 100,
 				allowedSwipeDirection: ['left','right'],
-				_isOpen: false,
 			},
 			xPositionReset: function(cb) {
 				var poly = this;
-				var startTime;
-				var startPosition = poly.elAnimate[0].getBoundingClientRect().left;
-				function step(timestamp) {
-					if( !startTime ) startTime = timestamp;
-					progress = (timestamp - startTime) / poly.animationTime;
-					var position = startPosition - (progress * startPosition);
-					if( progress >= 1 ) {
-						position = 0;
-					}
-					poly.elAnimate[0].style.webkitTransform = 'translate('+position+'px,0)';
-					poly.elAnimate[0].style.transform = 'translate('+position+'px,0)';
-					if( progress < 1 ) {
-						window.requestAnimationFrame(step);
-					} else {
-						poly.xStartPosition = poly.elAnimate.width();
-						if( cb ) cb();
-						if( poly.onSwipeLeftComplete ) poly.onSwipeLeftComplete.apply(poly,arguments);
-					}
-				}
-				window.requestAnimationFrame(step);
+				poly.elAnimate.animate({
+					left: 0
+				}, poly.animationTime, function() {
+					poly.xStartPosition = 0;
+					if( cb ) cb();
+				});
 			},
 			xPositionSnap: function(x,cb) {
-				this._isOpen = true;
 				var poly = this;
-				var startTime;
-				var startProgress = poly.elAnimate[0].getBoundingClientRect().left / poly.elAnimate.width();
-				function step(timestamp) {
-					if( !startTime ) startTime = timestamp;
-					progress = ((timestamp - startTime ) / poly.animationTime) + Math.abs(startProgress);
-					var position;
-					if( x < 0 ) {
-						position = progress >= 1 ? -100 : -progress*100;
-					} else {
-						position = progress >= 1 ? 100 : progress*100;
-					}
-					poly.elAnimate[0].style.webkitTransform = 'translate('+position+'%,0)';
-					poly.elAnimate[0].style.transform = 'translate('+position+'%,0)';
-					if( progress < 1 ) {
-						window.requestAnimationFrame(step);
-					} else {
+				if( x > 0 ) {
+					poly.elAnimate.animate({
+						left: '100%'
+					}, poly.animationTime, function() {
 						poly.xStartPosition = poly.elAnimate.width();
 						if( cb ) cb();
 						if( poly.onSwipeLeftComplete ) poly.onSwipeLeftComplete.apply(poly,arguments);
-					}
+					});
+				} else {
+					poly.elAnimate.animate({
+						left: '-100%'
+					}, poly.animationTime, function() {
+						poly.xStartPosition = - poly.elAnimate.width();
+						if( cb ) cb();
+						if( poly.onSwipeRightComplete ) poly.onSwipeRightComplete.apply(poly,arguments);
+					});
 				}
-				window.requestAnimationFrame(step);
 			},
 			onTrackstart: function(event) {
 				if( this.xStartPosition == 0 ) this.xStartPosition = event.clientX;
 			},
 			onTrack: function(event) {
-				var poly = this;
 				var dif = event.clientX - this.xStartPosition;
 				this.$.left.style.zIndex = this.startingZIndex - 1;
 				this.$.right.style.zIndex = this.startingZIndex - 1;
-				function follow() {
-					poly.elAnimate[0].style.webkitTransform = 'translate('+dif+'px,0)';
-					poly.elAnimate[0].style.transform = 'translate('+dif+'px,0)';
-				}
 				if( dif > 0 && _.indexOf(this.allowedSwipeDirection,'right') != -1 ) {
 					this.$.left.style.zIndex = this.startingZIndex;
-					follow();
+					this.elAnimate.css({left: dif});
 				} else if( dif < 0 && _.indexOf(this.allowedSwipeDirection,'left') != -1 ) {
 					this.$.right.style.zIndex = this.startingZIndex;
-					follow();
+					this.elAnimate.css({left: dif});
 				}
 			},
 			onTrackend: function(event,b,c) {
 				var dif = event.clientX - this.xStartPosition;
-				if( Math.abs(dif) >= this.xThreshold && ! this._isOpen &&
-					( ( dif < 0 && _.indexOf(this.allowedSwipeDirection,'left') != -1 ) ||
-					( dif > 0 && _.indexOf(this.allowedSwipeDirection,'right') != -1 ) )) {
+				if( Math.abs(dif) >= this.xThreshold && (
+					// ( dif > 0 && _.indexOf(this.allowedSwipeDirection,'left') != -1 ) &&
+					( dif < 0 && _.indexOf(this.allowedSwipeDirection,'left') != -1 ) ||
+					( dif > 0 && _.indexOf(this.allowedSwipeDirection,'right') != -1 )
+				)) {
+					if( dif > 0 && this.onSwipeRight ) {
+						this.onSwipeRight.apply(this,arguments);
+					}
+					if( dif < 0 && this.onSwipeLeft ) {
+						this.onSwipeLeft.apply(this,arguments);
+					}
 					this.xPositionSnap.apply(this,[dif]);
 				} else {
 					this.xPositionReset.apply(this);
-					this._isOpen = false;
 				}
 			},
-			_tapHandler: function(event,detail,handler) {
-				this._tap = [event,detail,handler];
+			_tapHandler: function(e, d, h) {
+        e.srcElement = this;
+				this._tap = [e, d, h];
+
+        if(this.tapHandler) this.tapHandler(e, d, this)
 			},
 			ready: function() {
 				var poly = this;
@@ -209,30 +193,29 @@ Resets the positions
 					this.$.right.style.zIndex = this.startingZIndex;
 				}
 				poly._isTrack = false;
-				PolymerGestures.addEventListener(this.elAnimate[0],'trackstart',function(){
+				PolymerGestures.addEventListener(this.$.wrapper,'trackstart',function(){
 					poly._isTrack = true;
 					poly.onTrackstart.apply(poly,arguments);
 				});
-				PolymerGestures.addEventListener(this.elAnimate[0],'track',function(){
-					poly._isTrack = true;
+				PolymerGestures.addEventListener(this.$.wrapper,'track',function(){
 					poly.onTrack.apply(poly,arguments);
 				});
-				PolymerGestures.addEventListener(this.elAnimate[0],'trackend',function(){
+				PolymerGestures.addEventListener(this.$.wrapper,'trackend',function(){
 					poly._isTrack = false;
 					poly.onTrackend.apply(poly,arguments);
 				});
 
 				var touchStart, touchTimeDifference;
-				if( poly.tapHandler ) {
-					$(this.$.touchpad)
-						.on('mouseup', function(e){
-							if( ! poly._isTrack ) {
-								poly.async(function(){
-									poly.tapHandler.apply(poly,poly._tap);
-								},null,100);
-							}
-						});
-				}
+				// if( poly.tapHandler ) {
+				// 	$(this.$.touchpad)
+				// 		.on('touchend mouseup', function(e){
+				// 			if( ! poly._isTrack ) {
+				// 				poly.async(function(){
+				// 					poly.tapHandler.apply(poly,poly._tap);
+				// 				},null,100);
+				// 			}
+				// 		});
+				// }
 			},
 			close: function() {
 				this.xPositionReset();
@@ -240,3 +223,4 @@ Resets the positions
 		});
 	</script>
 </polymer-element>
+
