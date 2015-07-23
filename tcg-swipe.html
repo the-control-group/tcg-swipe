@@ -140,10 +140,10 @@ Resets the positions
 				}
 			},
 			onTrackstart: function(event) {
+        event.preventTap();
 				if( this.xStartPosition == 0 ) this.xStartPosition = event.clientX;
 			},
 			onTrack: function(event) {
-        event.preventTap();
 				var dif = event.clientX - this.xStartPosition;
 				this.$.left.style.zIndex = this.startingZIndex - 1;
 				this.$.right.style.zIndex = this.startingZIndex - 1;
