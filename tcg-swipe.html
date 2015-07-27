@@ -83,7 +83,7 @@ Resets the positions
 		</style>
 		<div id="container" class="{{ {isReveal: isReveal} | tokenList }}" touch-action="none">
 			<div id="wrapper">
-				<div id="touchpad" touch-action="pan-y" on-tap="{{ _tapHandler }}">
+				<div id="touchpad" touch-action="pan-y" on-tap="{{ _touchPadTap }}">
 					<content select="[touchpad]"></content>
 				</div>
 				<div id="left" touch-action="pan-y" on-tap="{{ _tapHandler }}">
@@ -173,6 +173,9 @@ Resets the positions
 					this.xPositionReset.apply(this);
 				}
 			},
+      _touchPadTap: function(e) {
+        this.fire('touchpad-tap', {x: e.x, y: e.y});
+      },
 			_tapHandler: function(e, d, h) {
         e.srcElement = this;
 				this._tap = [e, d, h];
