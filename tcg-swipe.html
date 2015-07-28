@@ -42,7 +42,7 @@ Resets the positions
 
 -->
 <link rel="import" href="../polymer/polymer.html">
-<polymer-element name="tcg-swipe" attributes="isReveal xThreshold animationTime allowedSwipeDirection startingZIndex onSwipeLeft onSwipeRight onSwipeLeftComplete onSwipeRightComplete" touch-action="none">
+<polymer-element name="tcg-swipe" attributes="isReveal xThreshold animationTime allowedSwipeDirection startingZIndex onSwipeLeft onSwipeRight onSwipeLeftComplete onSwipeRightComplete">
 	<template>
 		<style>
 			#container {
@@ -64,166 +64,91 @@ Resets the positions
 			#touchpad {
 				left: 0;
 			}
-			#touchpad {
-				z-index: 5;
+
+      .touchpad,
+      #left, #right {
+				z-index: 1;
 				cursor: pointer;
+        -webkit-transition: transform .5s ease-in-out;
+           -moz-transition: transform .5s ease-in-out;
+             -o-transition: transform .5s ease-in-out;
+                transition: transform .5s ease-in-out;
 			}
+
 			#left {
-				left: -100%;
+				transform: translate3d(-100%, 0px, 0px);
 			}
 			#right {
-				right: -100%;
+				transform: translate3d(100%, 0px, 0px);
 			}
-			.isReveal #left,
-			.isReveal #right {
-				left: 0;
-				right: auto;
-				z-index: 1;
-			}
+
+      @media (min-width: 600px) {
+        #right {
+          transform: translate3d(0, 0, 0);
+        }
+      }
 		</style>
-		<div id="container" class="{{ {isReveal: isReveal} | tokenList }}" touch-action="none">
+		<div id="container" class="{{ {isReveal: isReveal} | tokenList }}">
 			<div id="wrapper">
-				<div id="touchpad" touch-action="pan-y" on-tap="{{ _touchPadTap }}">
+				<div id="touchpad" class="touchpad" on-tap="{{ _touchPadTap }}">
 					<content select="[touchpad]"></content>
 				</div>
-				<div id="left" touch-action="pan-y" on-tap="{{ _tapHandler }}">
+				<div id="left">
 					<content select="[left]"></content>
 				</div>
-				<div id="right" touch-action="pan-y" on-tap="{{ _tapHandler }}">
+				<div id="right">
 					<content select="[right]"></content>
 				</div>
 			</div>
 		</div>
 	</template>
-	<script src="../jquery/dist/jquery.min.js"></script>
+  <script src="../hammerjs/hammer.min.js"></script>
 	<script>
 		Polymer({
-			publish: {
-				tapHandler: null,
-				touchpad: null,
-				wrapper: null,
-				animationTime: 400,
-				xStartPosition: 0,
-				xThreshold: 50,
-				isReveal: false,
-				startingZIndex: 0,
-				touchTimeDifference: 100,
-				allowedSwipeDirection: ['left','right'],
-			},
-			xPositionReset: function(cb) {
-				var poly = this;
-				poly.elAnimate.animate({
-					left: 0
-				}, poly.animationTime, function() {
-					poly.xStartPosition = 0;
-					if( cb ) cb();
-				});
-			},
-			xPositionSnap: function(x,cb) {
-				var poly = this;
-				if( x > 0 ) {
-					poly.elAnimate.animate({
-						left: '100%'
-					}, poly.animationTime, function() {
-						poly.xStartPosition = poly.elAnimate.width();
-						if( cb ) cb();
-						if( poly.onSwipeLeftComplete ) poly.onSwipeLeftComplete.apply(poly,arguments);
-					});
-				} else {
-					poly.elAnimate.animate({
-						left: '-100%'
-					}, poly.animationTime, function() {
-						poly.xStartPosition = - poly.elAnimate.width();
-						if( cb ) cb();
-						if( poly.onSwipeRightComplete ) poly.onSwipeRightComplete.apply(poly,arguments);
-					});
-				}
-			},
-			onTrackstart: function(event) {
-        event.preventTap();
-				if( this.xStartPosition == 0 ) this.xStartPosition = event.clientX;
-			},
-			onTrack: function(event) {
-				var dif = event.clientX - this.xStartPosition;
-				this.$.left.style.zIndex = this.startingZIndex - 1;
-				this.$.right.style.zIndex = this.startingZIndex - 1;
-				if( dif > 0 && _.indexOf(this.allowedSwipeDirection,'right') != -1 ) {
-					this.$.left.style.zIndex = this.startingZIndex;
-					this.elAnimate.css({left: dif});
-				} else if( dif < 0 && _.indexOf(this.allowedSwipeDirection,'left') != -1 ) {
-					this.$.right.style.zIndex = this.startingZIndex;
-					this.elAnimate.css({left: dif});
-				}
-			},
-			onTrackend: function(event,b,c) {
-				var dif = event.clientX - this.xStartPosition;
-				if( Math.abs(dif) >= this.xThreshold && (
-					// ( dif > 0 && _.indexOf(this.allowedSwipeDirection,'left') != -1 ) &&
-					( dif < 0 && _.indexOf(this.allowedSwipeDirection,'left') != -1 ) ||
-					( dif > 0 && _.indexOf(this.allowedSwipeDirection,'right') != -1 )
-				)) {
-					if( dif > 0 && this.onSwipeRight ) {
-						this.onSwipeRight.apply(this,arguments);
-					}
-					if( dif < 0 && this.onSwipeLeft ) {
-						this.onSwipeLeft.apply(this,arguments);
-					}
-					this.xPositionSnap.apply(this,[dif]);
-				} else {
-					this.xPositionReset.apply(this);
-				}
-			},
+      _translateEl: function(el, x, measure) {
+        el.style.webkitTransform = 'translate3d(' + x + measure +', 0px, 2px)';
+        el.style.transform = 'translate3d(' + x + measure +', 0px, 2px)';
+      },
       _touchPadTap: function(e) {
+        if(this.cancelTap) return;
         this.fire('touchpad-tap', {x: e.x, y: e.y});
       },
-			_tapHandler: function(e, d, h) {
-        e.srcElement = this;
-				this._tap = [e, d, h];
+			domReady: function() {
+        this.cancelTap = false,
+        this.mc = new Hammer(this.$.wrapper);
+        this.mc.on('panleft panright', function(e){
+          if(this.$.wrapper.clientWidth > 600) return;
+          this.cancelTap = true;
+          if(e.type === 'panright'){
+            this._translateEl(
+              this.$.touchpad, 
+              e.deltaX - this.$.touchpad.clientWidth,
+              'px'
+            );
+          } else {
+            this._translateEl(this.$.touchpad, e.deltaX, 'px')
+            this._translateEl(this.$.right, e.deltaX + this.$.touchpad.clientWidth, 'px')
+          }
+        }.bind(this))
+        .on('panend', function(e){
+          if(this.$.wrapper.clientWidth > 600) return;
+          //if half way across snap;
+          if(e.deltaX < -40) {
+            this._translateEl(this.$.touchpad, -100, '%')
+            this._translateEl(this.$.right, 0, 'px')
+          } else if(e.deltaX >= -40) {
+            this._reset();
+          }
+          this.async(function(){
+            this.cancelTap = false;
+          }, 300);
+        }.bind(this))
+			},
 
-        if(this.tapHandler) this.tapHandler(e, d, this)
-			},
-			ready: function() {
-				var poly = this;
-				this.touchpad = $(this.$.touchpad);
-				this.$.touchpad.style.zIndex = this.startingZIndex;
-				if( this.isReveal ) {
-					this.elAnimate = this.touchpad;
-					this.$.left.style.zIndex = this.startingZIndex - 1;
-					this.$.right.style.zIndex = this.startingZIndex - 1;
-				} else {
-					this.elAnimate = $(this.$.wrapper);
-					this.$.touchpad.style.zIndex = this.startingZIndex;
-					this.$.left.style.zIndex = this.startingZIndex;
-					this.$.right.style.zIndex = this.startingZIndex;
-				}
-				poly._isTrack = false;
-				PolymerGestures.addEventListener(this.$.wrapper,'trackstart',function(){
-					poly._isTrack = true;
-					poly.onTrackstart.apply(poly,arguments);
-				});
-				PolymerGestures.addEventListener(this.$.wrapper,'track',function(){
-					poly.onTrack.apply(poly,arguments);
-				});
-				PolymerGestures.addEventListener(this.$.wrapper,'trackend',function(){
-					poly._isTrack = false;
-					poly.onTrackend.apply(poly,arguments);
-				});
-
-				// var touchStart, touchTimeDifference;
-				// if( poly.tapHandler ) {
-				// 	$(this.$.touchpad)
-				// 		.on('touchend mouseup', function(e){
-				// 			if( ! poly._isTrack ) {
-				// 				poly.async(function(){
-				// 					poly.tapHandler.apply(poly,poly._tap);
-				// 				},null,100);
-				// 			}
-				// 		});
-				// }
-			},
-			close: function() {
-				this.xPositionReset();
-			},
+      _reset: function(){
+        this.$.right.removeAttribute('style');
+        this.$.touchpad.removeAttribute('style');
+      }
 		});
 	</script>
 </polymer-element>
