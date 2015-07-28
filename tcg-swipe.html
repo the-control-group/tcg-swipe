@@ -8,7 +8,7 @@
 __Example:__
 
 ```
-	<tcg-swipe id="swipe" isReveal="{{ isReveal }}" xThreshold="{{ xThreshold }}" animationTime="{{ animationTime }}">
+	<tcg-swipe id="swipe" reveal="{{ reveal }}" xThreshold="{{ xThreshold }}" animationTime="{{ animationTime }}">
 		<div touchpad>Overlay Content</div>
 		<div left>
 			Left Content
@@ -22,17 +22,13 @@ __Example:__
 ```
 # Attributes
 
-#### `isReveal`
+#### `reveal`
 
 Boolean that determines if the left and right content is position right below the touchpad. If `false`, left and right content moves with the touchpad.
 
-#### `xThreshold`
+#### `threshold`
 
-Number that determines if it'll reveal the full content on trackend event. Default is `50` px
-
-#### `animationTime`
-
-Number in milliseconds for animation length
+The amount (in px) you have to move the mouse on x to start swiping. _Default: 30_
 
 # Methods
 
@@ -42,7 +38,7 @@ Resets the positions
 
 -->
 <link rel="import" href="../polymer/polymer.html">
-<polymer-element name="tcg-swipe" attributes="isReveal xThreshold animationTime allowedSwipeDirection startingZIndex onSwipeLeft onSwipeRight onSwipeLeftComplete onSwipeRightComplete">
+<polymer-element name="tcg-swipe">
 	<template>
 		<style>
 			#container {
@@ -88,7 +84,7 @@ Resets the positions
         }
       }
 		</style>
-		<div id="container" class="{{ {isReveal: isReveal} | tokenList }}">
+		<div id="container" class="{{ {isReveal: reveal} | tokenList }}">
 			<div id="wrapper">
 				<div id="touchpad" class="touchpad" on-tap="{{ _touchPadTap }}">
 					<content select="[touchpad]"></content>
@@ -105,6 +101,10 @@ Resets the positions
   <script src="../hammerjs/hammer.min.js"></script>
 	<script>
 		Polymer({
+      publish: {
+        threshold: 30,
+        reveal: {value: false, reflect: true}
+      },
       _translateEl: function(el, x, measure) {
         el.style.webkitTransform = 'translate3d(' + x + measure +', 0px, 2px)';
         el.style.transform = 'translate3d(' + x + measure +', 0px, 2px)';
@@ -116,6 +116,7 @@ Resets the positions
 			domReady: function() {
         this.cancelTap = false,
         this.mc = new Hammer(this.$.wrapper);
+        this.mc.get('pan').set({ threshold: this.threshold })
         this.mc.on('panleft panright', function(e){
           if(this.$.wrapper.clientWidth > 600) return;
           this.cancelTap = true;
