@@ -41,62 +41,60 @@ Resets the positions
 <polymer-element name="tcg-swipe">
 	<template>
 		<style>
-			#container {
-				position: relative;
-				width: 100%;
-				height: 50px;
-				overflow: hidden;
-			}
-			#wrapper,
-			#touchpad,
-			#left,
-			#right {
-				position: absolute;
-				top: 0;
-				width: 100%;
-				height: 100%;
-			}
-			#wrapper,
-			#touchpad {
-				left: 0;
-			}
+      :host {
+        display: block;
+        width: 100%;
+        overflow: hidden;
+        margin: 0;
+        margin: 0 auto;
+        padding: 0;
+        min-height: 64px;
+      }
 
-      .touchpad,
-      #left, #right {
-				z-index: 1;
+      .container {
+        position: relative;
+        height: 100%;
+        min-height: 64px;
+      }
+
+      .touchpad, .well {
+        width: 100%;
+        height: 100%;
+        position: absolute;
 				cursor: pointer;
-        -webkit-transition: transform .5s ease-in-out;
+        -webkit-transition: -webkit-transform .5s ease-in-out;
            -moz-transition: transform .5s ease-in-out;
              -o-transition: transform .5s ease-in-out;
                 transition: transform .5s ease-in-out;
-			}
+        -webkit-box-sizing: border-box;
+           -moz-box-sizing: border-box;
+                box-sizing: border-box;
+      }
 
-			#left {
-				transform: translate3d(-100%, 0px, 0px);
-			}
-			#right {
+			.well {
 				transform: translate3d(100%, 0px, 0px);
+				-webkit-transform: translate3d(100%, 0px, 0px);
 			}
 
       @media (min-width: 600px) {
-        #right {
+        .container, .touchpad, .well {
+          position: relative;
+        }
+
+        .well {
           transform: translate3d(0, 0, 0);
+          -webkit-transform: translate3d(0, 0, 0);
         }
       }
 		</style>
-		<div id="container" class="{{ {isReveal: reveal} | tokenList }}">
-			<div id="wrapper">
-				<div id="touchpad" class="touchpad" on-tap="{{ _touchPadTap }}">
-					<content select="[touchpad]"></content>
-				</div>
-				<div id="left">
-					<content select="[left]"></content>
-				</div>
-				<div id="right">
-					<content select="[right]"></content>
-				</div>
-			</div>
-		</div>
+    <div id="wrapper" class="container">
+      <div id="touchpad" class="touchpad" on-tap="{{ _touchPadTap }}">
+        <content select="[touchpad]"></content>
+      </div>
+      <div id="right" class="well">
+        <content select="[right]"></content>
+      </div>
+    </div>
 	</template>
   <script src="../hammerjs/hammer.min.js"></script>
 	<script>
